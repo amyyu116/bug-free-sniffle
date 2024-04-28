@@ -27,7 +27,7 @@ services:
       - static_volume:/home/app/web/project/static
       - media_volume:/home/app/web/project/media
     ports:
-      - 1366:80
+      - 1368:80
     depends_on:
       - web
 volumes:
