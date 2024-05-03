@@ -15,14 +15,12 @@ services:
   postgres:
     build: services/postgres
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+            - ./:/tmp/db
+            - postgres_data:/var/lib/postgresql/data/
     environment:
-            #- POSTGRES_USER=hello_flask
-            #- POSTGRES_PASSWORD=hello_flask
-            #- POSTGRES_DB=hello_flask_dev
-            - POSTGRES_USER=postgres
-            - POSTGRES_PASSWORD=pass
-            - PGUSER=postgres
+            - POSTGRES_USER=hello_flask
+            - POSTGRES_PASSWORD=hello_flask
+            - POSTGRES_DB=hello_flask_dev
     ports:
         - 1368:5432
 

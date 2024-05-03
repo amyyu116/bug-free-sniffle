@@ -43,7 +43,7 @@ CREATE TABLE tweets (
 CREATE TABLE tweet_urls (
     id_tweets BIGINT,
     urls TEXT,
-    PRIMARY KEY (id_tweets, id_urls)
+    PRIMARY KEY (id_tweets, urls)
 );
 
 COMMIT;
