@@ -5,18 +5,18 @@ services:
     build:
       context: ./services/web
       dockerfile: Dockerfile.prod
-    command: gunicorn --bind 0.0.0.0:5000 manage:app
+    command: gunicorn --bind 0.0.0.0:1369 manage:app
     volumes:
       - static_volume:/home/app/web/project/static
       - media_volume:/home/app/web/project/media
     expose:
-      - 5000
+      - 1369
     env_file:
       - ./.env.prod
     depends_on:
-      - postgres
+      - db
 
-  postgres:
+  db:
     build: services/postgres
     volumes:
       - ./:/tmp/db

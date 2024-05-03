@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Create Account</h2>
+<p>Make a username and password.</p>
+<form action='/create_account' method="POST">
+    <table>
+        <tr>
+            <td>username</td>
+            <td><input type=text name=username></td>
+        </tr>
+        <tr>
+            <td>password</td>
+            <td><input type="password" name=password></td>
+        </tr>
+	<tr>
+            <td>please re-enter password</td>
+            <td><input type="password" name=password></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td><input type=submit value='log in'></td>
+        </tr>
+    </table>
+</form>
+
+{% endblock %}

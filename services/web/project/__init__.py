@@ -6,14 +6,19 @@ from flask import (
     send_from_directory,
     request,
     render_template,
-    make_response
+    make_response,
+    redirect,
+    url_for
 )
 from flask_sqlalchemy import SQLAlchemy
+import sqlalchemy
 from werkzeug.utils import secure_filename
+from sqlalchemy import text
 
 app = Flask(__name__)
 app.config.from_object("project.config.Config")
 db = SQLAlchemy(app)
+db_connection = "postgresql://hello_flask:hello_flask@db:5432/hello_flask_prod"
 
 
 class User(db.Model):
@@ -43,6 +48,8 @@ def root():
     # check if logged in correctly
     username = request.cookies.get('username')
     password = request.cookies.get('password')
+    print(username)
+    print(password)
     good_credentials = are_credentials_good(username, password)
     print('good_credentials=', good_credentials)
 
@@ -51,12 +58,17 @@ def root():
     # the output of render_template is html
 
     # display first 20 tweets
-    # sql = """
-    # SELECT
-    # FROM tweets
-    # ORDER BY
-    # LIMIT 20;
-    # """
+    sql = """
+    SELECT text AS text, created_at
+    FROM tweets
+    ORDER BY created_at DESC
+    LIMIT 20;
+    """
+    engine = sqlalchemy.create_engine(db_connection)
+    connection = engine.connect()
+    result = connection.execute(text(sql))
+    for row in result:
+        messages.append({'text': row.text, 'created_at': row.created_at})
     return render_template('root.html', logged_in=good_credentials, messages=messages)
 
 
@@ -120,9 +132,20 @@ def login():
             return response
 
 
+@app.route('/logout')
+def logout():
+    # Create a response to redirect to the login page
+    # Clear the username and password cookies
+
+    response = make_response(render_template('root.html', logged_in=False))
+    response.set_cookie('username', '', expire=0)
+    response.set_cookie('password', '', expire=0)
+    return response
+
+
 @app.route("/create_account")
 def create_account():
-    return 'create account page'
+    return render_template('create_account.html')
 
 
 @app.route("/create_message")
@@ -130,9 +153,17 @@ def create_message():
     return 'create message page'
 
 
-@app.route("/search")
+@app.route('/search', methods=['GET', 'POST'])
 def search():
-    return 'search page'
+    # keyWord = request.args.get('search')
+
+    # check if logged in correctly
+    username = request.cookies.get('username')
+    password = request.cookies.get('password')
+    good_credentials = are_credentials_good(username, password)
+    print('good_credentials=', good_credentials)
+
+    return render_template('search.html', logged_in=good_credentials)
 
 
 @app.route("/static/<path:filename>")
