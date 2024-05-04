@@ -15,6 +15,7 @@ CREATE TABLE users (
     verified BOOLEAN,
     screen_name TEXT,
     name TEXT,
+    password TEXT,
     location TEXT,
     description TEXT,
     withheld_in_countries VARCHAR(2)[]

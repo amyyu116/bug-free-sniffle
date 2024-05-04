@@ -18,7 +18,7 @@ from sqlalchemy import text
 app = Flask(__name__)
 app.config.from_object("project.config.Config")
 db = SQLAlchemy(app)
-db_connection = "postgresql://hello_flask:hello_flask@db:5432/hello_flask_prod"
+db_connection = "postgresql://hello_flask:hello_flask@db:5432/hello_flask_dev"
 
 
 class User(db.Model):
@@ -69,6 +69,7 @@ def root():
     result = connection.execute(text(sql))
     for row in result:
         messages.append({'text': row.text, 'created_at': row.created_at})
+    connection.close()
     return render_template('root.html', logged_in=good_credentials, messages=messages)
 
 
@@ -89,8 +90,20 @@ def print_debug_info():
 def are_credentials_good(username, password):
     # FIXME:
     # look inside the databasse and check if the password is correct for the user
-    if username == 'haxor' and password == '1337':
-        return True
+    username_found = False
+    sql = """
+    SELECT screen_name, password
+    FROM users
+    WHERE screen_name = :username AND
+          password = :password
+    LIMIT 1;
+    """
+    engine = sqlalchemy.create_engine(db_connection)
+    connection = engine.connect()
+    result = connection.execute(text(sql), {"username":username, "password":password})
+    for row in result:
+        if row.screen_name == username and row.password == password:
+            return True
     else:
         return False
 
@@ -114,6 +127,7 @@ def login():
 
     # they submitted a form; we're on the POST method
     else:
+        good_credentials = are_credentials_good(username, password)
         if not good_credentials:
             return render_template('login.html', bad_credentials=True)
         else:
@@ -137,16 +151,59 @@ def logout():
     # Create a response to redirect to the login page
     # Clear the username and password cookies
 
-    response = make_response(render_template('root.html', logged_in=False))
-    response.set_cookie('username', '', expire=0)
-    response.set_cookie('password', '', expire=0)
+    response = make_response(render_template('logout.html'))
+    response.set_cookie('username', '', expires=0)
+    response.set_cookie('password', '', expires=0)
     return response
 
 
-@app.route("/create_account")
+@app.route("/create_account", methods=["GET", "POST"])
 def create_account():
-    return render_template('create_account.html')
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        password_confirm = request.form["password_confirm"]
+        if password_confirm == password and username is not None:
+            # generate a new user_id....
+            new_id = generate_user_id()
+            sql = """
+            INSERT INTO users (screen_name, id_users, password)
+            VALUES (:username, :new_id, :password)
+            """
+            engine = sqlalchemy.create_engine(db_connection)
+            connection = engine.connect()
+            transaction = connection.begin()
+                # Execute the SQL query
+            connection.execute(text(sql), {"username": username, "new_id": new_id,
+                                            "password": password})
+            connection.commit()
+                # Insertion successful
+            return redirect(url_for("login"))
+            connection.close()
+        else:
+            return render_template('create_account.html', bad_credentials=True)
+    else:
+        return render_template('create_account.html', bad_credentials=False)
 
+def generate_user_id():
+    # Generate a new user_id
+    engine = sqlalchemy.create_engine(db_connection)
+    connection = engine.connect()
+    new_id=0
+    while True:
+        # Generate a random new_id
+        new_id+=1
+        # Check if new_id already exists in the database
+        sql = """
+        SELECT COUNT(*)
+        FROM users
+        WHERE id_users = :new_id
+        """
+        result = connection.execute(text(sql), {"new_id": new_id}).scalar()
+        if result == 0:
+            # new_id is unique, break the loop
+            break
+    return new_id
 
 @app.route("/create_message")
 def create_message():

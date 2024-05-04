@@ -15,7 +15,7 @@
         </tr>
 	<tr>
             <td>please re-enter password</td>
-            <td><input type="password" name=password></td>
+            <td><input type="password" name=password_confirm></td>
         </tr>
         <tr>
             <td></td>
@@ -23,5 +23,10 @@
         </tr>
     </table>
 </form>
+{% if bad_credentials %}
+<p class='color:red;'>
+    ERROR: Please retype your password correctly and make sure you've entered a username.
+</p>
+{% endif %}
 
 {% endblock %}
