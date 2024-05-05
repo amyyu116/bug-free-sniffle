@@ -9,6 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - name: install dependencies
+      run:
+        pip install psycopg2
     - name: docker
       run: |
         # load the pagila data
@@ -29,6 +32,8 @@ jobs:
         # this is a bit hacky,
         # and a proper check would be to have an infinite loop that terminates once the data has been loaded
         sleep 20
+
+
         ./load_tweets.sh
         # run the tests
         # docker-compose exec -T pg ./run_tests.sh
