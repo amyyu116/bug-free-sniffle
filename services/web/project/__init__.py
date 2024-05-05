@@ -43,6 +43,10 @@ def root():
     text = '<strong>' + text + '</strong>' # + 100
     return text
     '''
+    page = request.args.get('page', 1, type=int)
+    messages_per_page = 20
+    offset = (page - 1) * messages_per_page
+
     messages = [{}]
 
     # check if logged in correctly
@@ -62,15 +66,15 @@ def root():
     SELECT text AS text, created_at
     FROM tweets
     ORDER BY created_at DESC
-    LIMIT 20;
+    LIMIT :limit OFFSET :offset;
     """
     engine = sqlalchemy.create_engine(db_connection)
     connection = engine.connect()
-    result = connection.execute(text(sql))
+    result = connection.execute(text(sql), {'limit': messages_per_page, 'offset': offset}).fetchall()
     for row in result:
         messages.append({'text': row.text, 'created_at': row.created_at})
     connection.close()
-    return render_template('root.html', logged_in=good_credentials, messages=messages)
+    return render_template('root.html', logged_in=good_credentials, messages=messages,page=page)
 
 
 def print_debug_info():

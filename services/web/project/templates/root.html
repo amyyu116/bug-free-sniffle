@@ -6,10 +6,20 @@
 
 <h2>Messages</h2>
     <ul>
+	{% if messages %}
         {% for message in messages %}
-        {% if message.text %}
+	{% if message.text %}
         <p>{{ message.text }} ({{ message.created_at }})</p>
-        {% endif %}
-        {% endfor %}
+	{% endif %}
+	{% endfor %}
+	{% else %}
+	<p>You have reached the end.</p>
+	{% endif %}
     </ul>
+    <div>
+	    {% if page > 1 %} 
+	    <a href="{{ url_for('root', page=page-1) }}">Previous</a>
+	    {% endif %}
+	    <a href="{{ url_for('root', page=page+1) }}">Next</a>
+    </div>
 {% endblock %}
