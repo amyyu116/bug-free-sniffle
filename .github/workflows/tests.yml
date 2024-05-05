@@ -10,13 +10,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
-      run:
+      run: |
         pip install psycopg2
         pip install sqlalchemy
-        pip install datetime
-        pip install zipfile
-        pip install io
-        pip install json
     - name: docker
       run: |
         # load the pagila data
