@@ -1,3 +1,6 @@
+# CS143 Final Project
+[![](https://github.com/amyyu116/twitter_final_project/workflows/tests/badge.svg)](https://github.com/amyyu116/twitter_final_project/actions?query=workflow%3Atests)
+
 # i. Overview
    This repo configures Flask to run on Docker with Postgres on development and production servers. Contains a static file with a static .txt file and a media folder containing user-uploaded media content via Nginx. Postgres is used to store a SQL database of user information, Gunicorn is used for the production environment. Nginx handles user-uploaded content to add it to the media folder.
 ![](https://github.com/amyyu116/flask-on-docker/blob/main/example.gif)

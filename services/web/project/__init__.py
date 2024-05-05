@@ -286,7 +286,7 @@ def search():
               SELECT tweets.text AS text, users.screen_name, tweets.created_at
             FROM tweets
             JOIN users USING (id_users)
-            WHERE tweets.text ILIKE :keyword
+            WHERE tweets.text @@ :keyword
             ORDER BY created_at DESC, id_tweets DESC
             LIMIT :limit OFFSET :offset;  
             """
