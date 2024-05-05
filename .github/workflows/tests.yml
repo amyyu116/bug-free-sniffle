@@ -12,6 +12,12 @@ jobs:
     - name: install dependencies
       run:
         pip install psycopg2
+        pip install sqlalchemy
+        pip install os
+        pip install datetime
+        pip install zipfile
+        pip install io
+        pip install json
     - name: docker
       run: |
         # load the pagila data
