@@ -44,8 +44,8 @@ def root():
     return text
     '''
     page = request.args.get('page', 1, type=int)
-    messages_per_page = 20
-    offset = (page - 1) * messages_per_page
+    num_messages = 20
+    offset = (page - 1) * num_messages
 
     messages = [{}]
 
@@ -63,16 +63,17 @@ def root():
 
     # display first 20 tweets
     sql = """
-    SELECT text AS text, created_at
+    SELECT tweets.text AS text, users.screen_name, tweets.created_at
     FROM tweets
-    ORDER BY created_at DESC
+    JOIN users USING (id_users)
+    ORDER BY created_at DESC, id_tweets DESC 
     LIMIT :limit OFFSET :offset;
     """
     engine = sqlalchemy.create_engine(db_connection)
     connection = engine.connect()
-    result = connection.execute(text(sql), {'limit': messages_per_page, 'offset': offset}).fetchall()
+    result = connection.execute(text(sql), {'limit': num_messages, 'offset': offset}).fetchall()
     for row in result:
-        messages.append({'text': row.text, 'created_at': row.created_at})
+        messages.append({'text': row.text, 'created_at': row.created_at, 'screen_name': row.screen_name})
     connection.close()
     return render_template('root.html', logged_in=good_credentials, messages=messages,page=page)
 
@@ -270,10 +271,31 @@ def search():
     # check if logged in correctly
     username = request.cookies.get('username')
     password = request.cookies.get('password')
+    messages = [{}]
+    page = request.args.get('page', 1, type=int)
+    num_messages = 20
+    offset = (page - 1) * num_messages
     good_credentials = are_credentials_good(username, password)
     print('good_credentials=', good_credentials)
-
-    return render_template('search.html', logged_in=good_credentials)
+    if request.method == 'POST':
+        keyword = request.form.get('query')
+        if keyword:
+            engine = sqlalchemy.create_engine(db_connection)
+            connection = engine.connect()
+            sql = """
+              SELECT tweets.text AS text, users.screen_name, tweets.created_at
+            FROM tweets
+            JOIN users USING (id_users)
+            WHERE tweets.text ILIKE :keyword
+            ORDER BY created_at DESC, id_tweets DESC
+            LIMIT :limit OFFSET :offset;  
+            """
+            results = connection.execute(text(sql), {'limit': num_messages, 'offset': offset,'keyword':f'%{keyword}%'})
+            for row in results:
+                messages.append({'text': row.text, 'created_at': row.created_at, 'screen_name': row.screen_name})
+            connection.close()
+            return render_template('search.html', logged_in=good_credentials, messages=messages, searched=True, page=page) 
+    return render_template('search.html', logged_in=good_credentials, messages=messages, searched=False)
 
 
 @app.route("/static/<path:filename>")
@@ -292,10 +314,4 @@ def upload_file():
         file = request.files["file"]
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config["MEDIA_FOLDER"], filename))
-    return """
-    <!doctype html>
-    <title>upload new File</title>
-    <form action="" method=post enctype=multipart/form-data>
-      <p><input type=file name=file><input type=submit value=Upload>
-    </form>
-    """
+    return

@@ -3,5 +3,30 @@
 {% block content %}
 <h2>Search</h2>
 <p>Input your search terms below.</p>
-
+<form action="/search" method="POST">
+<input type="text" name="query" placeholder="">
+<button type="submit">Search</button>
+</form>
+<ul>
+        {% if searched %}
+	<h2>Results</h2>
+        {% for message in messages %}
+        {% if message.text %}
+        <div>
+		<p style="margin: 0; padding: 0;"><strong>@{{ message.screen_name }}</strong> <small>({{ message.created_at }})</small>
+		<br>{{ message.text }}<br></p>
+        </div>
+        {% endif %}
+        {% endfor %}
+        {% if messages|length <= 1 %}
+        <p>You have reached the end.</p>
+        {% endif %}
+    </ul>
+    <div>
+            {% if page > 1 %}
+            <a href="{{ url_for('search', page=page-1) }}">Previous</a>
+            {% endif %}
+            <a href="{{ url_for('search', page=page+1) }}">Next</a>
+    </div>
+    {% endif %}
 {% endblock %}

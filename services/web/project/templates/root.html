@@ -9,11 +9,16 @@
 	{% if messages %}
         {% for message in messages %}
 	{% if message.text %}
-        <p>{{ message.text }} ({{ message.created_at }})</p>
+	<div>
+        <p style="margin: 0; padding: 0;"><strong>@{{ message.screen_name }}</strong>       ({{ message.created_at }})
+	<br>{{ message.text }}</p>
+	<br>
+	</div>
 	{% endif %}
 	{% endfor %}
-	{% else %}
+	{% if messages|length <= 1 %}
 	<p>You have reached the end.</p>
+	{% endif %}
 	{% endif %}
     </ul>
     <div>
