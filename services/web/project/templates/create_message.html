@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Share something with the world!</h2>
+
+<form action='/create_message' method="POST">
+    <table>
+        <tr>
+            <td>message</td>
+            <td><input type=text name='message'></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td><input type=submit value='post'></td>
+        </tr>
+    </table>
+</form>
+
+{% if returnMessage %}
+<p style="color: red;">{{ returnMessage }}</p>
+{% endif %}
+
+{% endblock %}

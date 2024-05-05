@@ -3,7 +3,7 @@
 
 BEGIN;
 CREATE TABLE users (
-    id_users BIGINT PRIMARY KEY,
+    id_users BIGSERIAL PRIMARY KEY,
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
     urls TEXT,
@@ -22,7 +22,7 @@ CREATE TABLE users (
 );
 
 CREATE TABLE tweets (
-    id_tweets BIGINT PRIMARY KEY,
+    id_tweets BIGSERIAL PRIMARY KEY,
     id_users BIGINT,
     created_at TIMESTAMPTZ,
     in_reply_to_status_id BIGINT,

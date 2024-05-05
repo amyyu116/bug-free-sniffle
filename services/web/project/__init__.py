@@ -163,18 +163,18 @@ def create_account():
         username = request.form["username"]
         password = request.form["password"]
         password_confirm = request.form["password_confirm"]
-        if password_confirm == password and username is not None:
+        engine = sqlalchemy.create_engine(db_connection)
+        connection = engine.connect()
+        username_unique = check_username(username)
+        if password_confirm == password and username_unique:
             # generate a new user_id....
-            new_id = generate_user_id()
             sql = """
-            INSERT INTO users (screen_name, id_users, password)
-            VALUES (:username, :new_id, :password)
+            INSERT INTO users (screen_name, password)
+            VALUES (:username, :password)
             """
-            engine = sqlalchemy.create_engine(db_connection)
-            connection = engine.connect()
             transaction = connection.begin()
                 # Execute the SQL query
-            connection.execute(text(sql), {"username": username, "new_id": new_id,
+            connection.execute(text(sql), {"username": username,
                                             "password": password})
             connection.commit()
                 # Insertion successful
@@ -185,29 +185,78 @@ def create_account():
     else:
         return render_template('create_account.html', bad_credentials=False)
 
-def generate_user_id():
-    # Generate a new user_id
+def check_username(username):
+    if username is None:
+        return False
     engine = sqlalchemy.create_engine(db_connection)
     connection = engine.connect()
-    new_id=0
-    while True:
-        # Generate a random new_id
-        new_id+=1
-        # Check if new_id already exists in the database
-        sql = """
-        SELECT COUNT(*)
+    sql = """
+        SELECT count(*) as count
         FROM users
-        WHERE id_users = :new_id
-        """
-        result = connection.execute(text(sql), {"new_id": new_id}).scalar()
-        if result == 0:
-            # new_id is unique, break the loop
-            break
-    return new_id
+        WHERE screen_name = :username;
+    """
+    result = connection.execute(text(sql), {"username": username})
+    for row in result:
+        if row.count == 0:
+            return True
+    connection.close()
+    return False
 
-@app.route("/create_message")
+@app.route('/create_message', methods=['GET', 'POST'])
 def create_message():
-    return 'create message page'
+    # check if logged in correctly
+    username = request.cookies.get('username')
+    password = request.cookies.get('password')
+    good_credentials = are_credentials_good(username, password)
+    print('good_credentials=', good_credentials)
+
+    # create message
+    if request.method == 'POST':
+        # removes trailing and ending whitespaces to check for empty input
+        message = request.form.get('message').strip() if request.form.get('message') else ''
+        print(message)
+        if not message:  # No message was entered
+           return render_template('create_message.html', returnMessage="No message provided.", logged_in=good_credentials)
+
+        else:
+            engine = sqlalchemy.create_engine(db_connection)
+            connection = engine.connect()
+            transaction = connection.begin()    
+            try:
+                id_users = get_user_id(username, password)
+                print(id_users)
+                sql = """
+                INSERT INTO tweets (
+                    id_users,
+                    created_at, 
+                    text
+                    ) VALUES (
+                    :id_users, 
+                    NOW(), 
+                    :message);
+                """
+                connection.execute(text(sql), {'id_users': id_users, 'message': message})
+                transaction.commit()
+                return render_template('create_message.html', returnMessage="Message successfully posted!", logged_in=good_credentials)
+            except Exception as e:    
+                transaction.rollback()
+                raise e
+    
+    return render_template('create_message.html', logged_in=good_credentials)
+
+def get_user_id(username, password):
+    """
+    This function is a helper function for create_message that 
+    """
+    engine = sqlalchemy.create_engine(db_connection)
+    connection = engine.connect()
+    sql = """
+        SELECT id_users FROM users WHERE screen_name = :username AND password = :password
+        """
+    result = connection.execute(text(sql), {"username": username, "password": password})
+    # fetch the first column of the row (user id)
+    user_id = result.scalar()
+    return user_id
 
 
 @app.route('/search', methods=['GET', 'POST'])
