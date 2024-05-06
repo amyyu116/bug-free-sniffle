@@ -47,4 +47,7 @@ CREATE TABLE tweet_urls (
     PRIMARY KEY (id_tweets, urls)
 );
 
+ALTER TABLE tweets ADD COLUMN ts tsvector
+    GENERATED ALWAYS AS (to_tsvector('english', text)) STORED;
+
 COMMIT;

@@ -23,9 +23,17 @@
         </tr>
     </table>
 </form>
-{% if bad_credentials %}
-<p class='color:red;'>
-    ERROR: Please retype your password correctly and make sure you've entered a username.
+{% if error == "bad_user" %}
+<p style='color:red;'>
+    ERROR: Username already exists!
+</p>
+{% elif error == "password_error" %}
+<p style='color:red;'>
+    ERROR: Passwords mismatching.
+</p>
+{% elif error == "both" %}
+<p style='color:red;'>
+    ERROR: Username already exists and passwords mismatching.
 </p>
 {% endif %}
 

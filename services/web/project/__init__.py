@@ -140,12 +140,8 @@ def login():
             # return 'login successful'
             # create a cookie that contains the username/password info
 
-            template = render_template(
-                'login.html',
-                bad_credentials=False,
-                logged_in=True)
             # return template
-            response = make_response(template)
+            response = make_response(redirect(url_for('root')))
             response.set_cookie('username', username)
             response.set_cookie('password', password)
             return response
@@ -171,7 +167,13 @@ def create_account():
         engine = sqlalchemy.create_engine(db_connection)
         connection = engine.connect()
         username_unique = check_username(username)
-        if password_confirm == password and username_unique:
+        if username_unique == False and password_confirm != password:
+            return render_template('create_account.html', error="both")
+        elif username_unique == False:
+            return render_template('create_account.html', error="bad_user")
+        elif password_confirm != password:
+            return render_template('create_account.html', error="password_error")
+        elif password_confirm == password and username_unique:
             # generate a new user_id....
             sql = """
             INSERT INTO users (screen_name, password)
@@ -185,8 +187,6 @@ def create_account():
                 # Insertion successful
             return redirect(url_for("login"))
             connection.close()
-        else:
-            return render_template('create_account.html', bad_credentials=True)
     else:
         return render_template('create_account.html', bad_credentials=False)
 
@@ -286,11 +286,12 @@ def search():
               SELECT tweets.text AS text, users.screen_name, tweets.created_at
             FROM tweets
             JOIN users USING (id_users)
-            WHERE tweets.text @@ :keyword
-            ORDER BY created_at DESC, id_tweets DESC
+            WHERE to_tsvector('english', tweets.text) @@ plainto_tsquery(:keyword)
+            ORDER BY ts_rank(to_tsvector('english', tweets.text), plainto_tsquery(:keyword)) DESC,
+                    tweets.created_at DESC, tweets.id_tweets DESC
             LIMIT :limit OFFSET :offset;  
             """
-            results = connection.execute(text(sql), {'limit': num_messages, 'offset': offset,'keyword':f'%{keyword}%'})
+            results = connection.execute(text(sql), {'limit': num_messages, 'offset': offset,'keyword':keyword})
             for row in results:
                 messages.append({'text': row.text, 'created_at': row.created_at, 'screen_name': row.screen_name})
             connection.close()
