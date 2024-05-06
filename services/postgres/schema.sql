@@ -2,6 +2,8 @@
 \set ON_ERROR_STOP on
 
 BEGIN;
+CREATE EXTENSION rum;
+
 CREATE TABLE users (
     id_users BIGSERIAL PRIMARY KEY,
     created_at TIMESTAMPTZ,
@@ -47,7 +49,10 @@ CREATE TABLE tweet_urls (
     PRIMARY KEY (id_tweets, urls)
 );
 
-ALTER TABLE tweets ADD COLUMN ts tsvector
-    GENERATED ALWAYS AS (to_tsvector('english', text)) STORED;
+CREATE INDEX tweets_text_rum_idx ON tweets USING rum (to_tsvector('english', text) rum_tsvector_ops);
+
+CREATE INDEX idx_tweets_created_at_id_tweets ON tweets(created_at DESC, id_tweets);
+
+CREATE INDEX idx_users_screen_name ON users(screen_name);
 
 COMMIT;

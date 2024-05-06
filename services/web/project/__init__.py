@@ -66,7 +66,7 @@ def root():
     SELECT tweets.text AS text, users.screen_name, tweets.created_at
     FROM tweets
     JOIN users USING (id_users)
-    ORDER BY created_at DESC, id_tweets DESC 
+    ORDER BY created_at DESC, id_tweets DESC
     LIMIT :limit OFFSET :offset;
     """
     engine = sqlalchemy.create_engine(db_connection)
@@ -75,7 +75,7 @@ def root():
     for row in result:
         messages.append({'text': row.text, 'created_at': row.created_at, 'screen_name': row.screen_name})
     connection.close()
-    return render_template('root.html', logged_in=good_credentials, messages=messages,page=page)
+    return render_template('root.html', logged_in=good_credentials, messages=messages, page=page)
 
 
 def print_debug_info():
@@ -95,7 +95,6 @@ def print_debug_info():
 def are_credentials_good(username, password):
     # FIXME:
     # look inside the databasse and check if the password is correct for the user
-    username_found = False
     sql = """
     SELECT screen_name, password
     FROM users
@@ -264,39 +263,39 @@ def get_user_id(username, password):
     return user_id
 
 
-@app.route('/search', methods=['GET', 'POST'])
-def search():
-    # keyWord = request.args.get('search')
 
-    # check if logged in correctly
+@app.route('/search')
+def search():
+    query = request.args.get('q', '')
+    page = request.args.get('page', 1, type=int)
+    messages_per_page = 20
+    offset = (page - 1) * messages_per_page
     username = request.cookies.get('username')
     password = request.cookies.get('password')
-    messages = [{}]
-    page = request.args.get('page', 1, type=int)
-    num_messages = 20
-    offset = (page - 1) * num_messages
     good_credentials = are_credentials_good(username, password)
-    print('good_credentials=', good_credentials)
-    if request.method == 'POST':
-        keyword = request.form.get('query')
-        if keyword:
-            engine = sqlalchemy.create_engine(db_connection)
-            connection = engine.connect()
-            sql = """
-              SELECT tweets.text AS text, users.screen_name, tweets.created_at
-            FROM tweets
-            JOIN users USING (id_users)
-            WHERE to_tsvector('english', tweets.text) @@ plainto_tsquery(:keyword)
-            ORDER BY ts_rank(to_tsvector('english', tweets.text), plainto_tsquery(:keyword)) DESC,
-                    tweets.created_at DESC, tweets.id_tweets DESC
-            LIMIT :limit OFFSET :offset;  
-            """
-            results = connection.execute(text(sql), {'limit': num_messages, 'offset': offset,'keyword':keyword})
-            for row in results:
-                messages.append({'text': row.text, 'created_at': row.created_at, 'screen_name': row.screen_name})
-            connection.close()
-            return render_template('search.html', logged_in=good_credentials, messages=messages, searched=True, page=page) 
-    return render_template('search.html', logged_in=good_credentials, messages=messages, searched=False)
+    if query:
+        sql = """
+        SELECT u.screen_name, t.text, ts_headline(t.text, plainto_tsquery(:query)) AS highlighted_text, t.created_at
+        FROM tweets t
+        JOIN users u ON t.id_users = u.id_users
+        WHERE to_tsvector('english', t.text) @@ plainto_tsquery(:query)
+        ORDER BY ts_rank_cd(to_tsvector('english', t.text), plainto_tsquery(:query)) DESC, t.created_at DESC
+        LIMIT :limit OFFSET :offset;
+        """
+        engine = sqlalchemy.create_engine(db_connection)
+        connection = engine.connect()
+        results = connection.execute(text(sql), {'query': query, 'limit': messages_per_page, 'offset': offset}).fetchall()
+        connection.close()
+        messages = []
+        for row in results:
+            highlighted_text = row.highlighted_text
+            highlighted_text = highlighted_text.replace('<b>', '<span style="background-color: #fffead;">')
+            highlighted_text = highlighted_text.replace('</b>', '</span>')
+            messages.append({'text': row.text, 'created_at': row.created_at, 'screen_name': row.screen_name, 'highlighted_text': highlighted_text})
+    else:
+        messages = []
+
+    return render_template('search.html', logged_in = good_credentials, messages=messages, query=query, page=page)
 
 
 @app.route("/static/<path:filename>")

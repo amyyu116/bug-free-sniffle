@@ -1,32 +1,29 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Search</h2>
-<p>Input your search terms below.</p>
-<form action="/search" method="POST">
-<input type="text" name="query" placeholder="">
-<button type="submit">Search</button>
+<h2>Search Tweets</h2>
+<form action="{{ url_for('search') }}" method="get">
+    <input type="text" name="q" placeholder="Search tweets..." required>
+    <button type="submit">Search</button>
 </form>
-<ul>
-        {% if searched %}
-	<h2>Results</h2>
-        {% for message in messages %}
-        {% if message.text %}
-        <div>
-		<p style="margin: 0; padding: 0;"><strong>@{{ message.screen_name }}</strong> <small>({{ message.created_at }})</small>
-		<br>{{ message.text }}<br></p>
-        </div>
-        {% endif %}
-        {% endfor %}
-        {% if messages|length <= 1 %}
-        <p>You have reached the end.</p>
-        {% endif %}
-    </ul>
+
+{% if messages %}
     <div>
-            {% if page > 1 %}
-            <a href="{{ url_for('search', page=page-1) }}">Previous</a>
-            {% endif %}
-            <a href="{{ url_for('search', page=page+1) }}">Next</a>
+        <h3>Search Results</h3>
+        {% for message in messages %}
+        <div>
+        <p style="margin: 0; padding: 0;"><strong>@{{ message.screen_name }}</strong>       ({{ message.created_at }})<br>{{ message.highlighted_text | safe }}</p>
+	<br> 
+        </div>
+	{% endfor %}
     </div>
-    {% endif %}
+    <div class="pagination">
+        {% if page > 1 %}
+            <a href="{{ url_for('search', q=query, page=page-1) }}">Previous</a>
+        {% endif %}
+        <a href="{{ url_for('search', q=query, page=page+1) }}">Next</a>
+    </div>
+{% else %}
+    <p>No results found.</p>
+{% endif %}
 {% endblock %}
