@@ -50,9 +50,12 @@ CREATE TABLE tweet_urls (
 );
 
 CREATE INDEX tweets_text_rum_idx ON tweets USING rum (to_tsvector('english', text) rum_tsvector_ops);
+CREATE INDEX idx_twt_text on tweets using rum(to_tsvector('simple', text));
 
 CREATE INDEX idx_tweets_created_at_id_tweets ON tweets(created_at DESC, id_tweets);
 
+CREATE INDEX idx_users_username_password ON users(screen_name, password);
 CREATE INDEX idx_users_screen_name ON users(screen_name);
+CREATE INDEX idx_users_id ON users(id_users)
 
 COMMIT;
