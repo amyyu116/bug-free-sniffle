@@ -34,3 +34,4 @@ jobs:
         # and a proper check would be to have an infinite loop that terminates once the data has been loaded
         sleep 20
 
+        ./load_tweets_test.sh
