@@ -327,7 +327,6 @@ def _insert_tweets(connection,input_tweets):
             '''
             )
         res = connection.execute(sql, { key+str(i):value for i,tweet in enumerate(tweets) for key,value in tweet.items() })
-    trans.commit()
 
 
 if __name__ == '__main__':
@@ -361,4 +360,3 @@ if __name__ == '__main__':
                             tweet = json.loads(line)
                             tweets.append(tweet)
                         insert_tweets(connection,tweets,args.batch_size)
-                        trans.commit()

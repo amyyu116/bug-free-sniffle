@@ -18,7 +18,7 @@ from sqlalchemy import text
 app = Flask(__name__)
 app.config.from_object("project.config.Config")
 db = SQLAlchemy(app)
-db_connection = "postgresql://hello_flask:hello_flask@db:5432/hello_flask_dev"
+db_connection = "postgresql://hello_flask:hello_flask@db:5432/hello_flask_prod"
 
 
 class User(db.Model):

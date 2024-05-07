@@ -25,6 +25,8 @@
 	    {% if page > 1 %} 
 	    <a href="{{ url_for('root', page=page-1) }}">Previous</a>
 	    {% endif %}
+	    {% if messages|length >= 20 %}
 	    <a href="{{ url_for('root', page=page+1) }}">Next</a>
+	    {% endif %}
     </div>
 {% endblock %}
